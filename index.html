@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mubreV etluts</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 0 15px;
+  background: #000;
+  color: #00ff66;
+}
+h1 { font-size: 28px; }
+textarea {
+  width: 100%;
+  height: 160px;
+  margin: 8px 0;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  background: #000;
+  color: #00ff66;
+  border: 1px solid #00ff66;
+  border-radius: 3px;
+  resize: vertical;
+  outline: none;
+}
+textarea:focus {
+  border-color: #00ff66;
+}
+button {
+  padding: 7px 12px;
+  margin-right: 5px;
+  border: 1px solid #00ff66;
+  background: #000;
+  color: #00ff66;
+  cursor: pointer;
+}
+button:hover {
+  background: #00ff66;
+  color: #000;
+}
+.mode { margin-bottom: 12px; }
+.status {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #00ff66;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>mubreV etluts</h1>
+  
+
+  <div class="mode">
+    <button id="encodeMode" class="active" onclick="setMode('encode')">Encode</button>
+    <button id="decodeMode" class="secondary" onclick="setMode('decode')">Decode</button>
+  </div>
+
+  <div>
+    <textarea id="input" placeholder="Type or paste here..."></textarea>
+    <textarea id="output" placeholder="Result appears here..." readonly></textarea>
+
+    <div class="buttons">
+      <button onclick="runCipher()">Convert</button>
+      <button class="secondary" onclick="copyResult()">Copy</button>
+      <button class="secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+let mode = "encode";
+
+function mValue(position) {
+  return position + 26 + Math.floor((position - 1) / 5);
+}
+
+function setMode(newMode) {
+  mode = newMode;
+  document.getElementById("encodeMode").className =
+    mode === "encode" ? "active" : "secondary";
+  document.getElementById("decodeMode").className =
+    mode === "decode" ? "active" : "secondary";
+
+  document.getElementById("input").placeholder =
+    mode === "encode" ? "Type your message here..." : "Paste M Cipher here...";
+  document.getElementById("output").value = "";
+  document.getElementById("status").textContent =
+    mode === "encode" ? "Encoder selected." : "Decoder selected.";
+}
+
+function encode() {
+  const input = document.getElementById("input").value;
+  let output = "";
+
+  for (const char of input) {
+    if (char === " ") {
+      output += "15";
+      continue;
+    }
+
+    const c = char.toUpperCase();
+    const position = c.charCodeAt(0) - 64;
+
+    if (position >= 1 && position <= 26) {
+      output += String(mValue(position));
+    } else {
+      output += `[${char}]`;
+    }
+  }
+
+  return output;
+}
+
+function decode() {
+  const input = document.getElementById("input").value.trim();
+  const values = [];
+
+  for (let p = 1; p <= 26; p++) {
+    values.push([String(mValue(p)), p]);
+  }
+
+  values.sort((a, b) => b[0].length - a[0].length);
+
+  let i = 0;
+  let output = "";
+
+  while (i < input.length) {
+    if (input.startsWith("15", i)) {
+      output += " ";
+      i += 2;
+      continue;
+    }
+
+    let found = false;
+
+    for (const [num, position] of values) {
+      if (input.startsWith(num, i)) {
+        output += String.fromCharCode(64 + position);
+        i += num.length;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      output += "?";
+      i++;
+    }
+  }
+
+  return output;
+}
+
+function runCipher() {
+  document.getElementById("output").value =
+    mode === "encode" ? encode() : decode();
+
+  document.getElementById("status").textContent =
+    mode === "encode" ? "Encoded!" : "Decoded!";
+}
+
+function copyResult() {
+  const result = document.getElementById("output").value;
+  if (result) navigator.clipboard.writeText(result);
+}
+
+function clearAll() {
+  document.getElementById("input").value = "";
+  document.getElementById("output").value = "";
+  document.getElementById("status").textContent = "";
+}
+</script>
+</body>
+</html>
